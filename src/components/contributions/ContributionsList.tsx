@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,13 +13,11 @@ const ContributionsList = () => {
   const { contributions, members } = useChama();
   const [search, setSearch] = useState("");
 
-  // Get member name for each contribution
   const getMemberName = (memberId: string) => {
     const member = members.find(m => m.id === memberId);
     return member ? member.name : "Unknown Member";
   };
 
-  // Filter contributions based on search
   const filteredContributions = contributions.filter(contribution => {
     const memberName = getMemberName(contribution.memberId);
     return (
@@ -30,7 +27,6 @@ const ContributionsList = () => {
     );
   });
 
-  // Sort contributions by date (most recent first)
   const sortedContributions = [...filteredContributions].sort((a, b) => {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
@@ -66,6 +62,7 @@ const ContributionsList = () => {
                 <th className="pb-2 font-medium">Member</th>
                 <th className="pb-2 font-medium">Amount</th>
                 <th className="pb-2 font-medium">Date</th>
+                <th className="pb-2 font-medium">Month</th>
                 <th className="pb-2 font-medium">Status</th>
                 <th className="pb-2 font-medium">Payment Method</th>
               </tr>
@@ -81,6 +78,7 @@ const ContributionsList = () => {
                     <td className="py-3">{getMemberName(contribution.memberId)}</td>
                     <td className="py-3">KSh {contribution.amount.toLocaleString()}</td>
                     <td className="py-3">{contribution.date}</td>
+                    <td className="py-3">{format(new Date(contribution.date), 'MMMM yyyy')}</td>
                     <td className="py-3">
                       <Badge className={contribution.status === 'Paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}>
                         {contribution.status}
@@ -91,7 +89,7 @@ const ContributionsList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-6 text-center text-gray-500">
+                  <td colSpan={6} className="py-6 text-center text-gray-500">
                     No contributions found
                   </td>
                 </tr>
