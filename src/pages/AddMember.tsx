@@ -1,30 +1,23 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { UserPlus } from "lucide-react";
-
+import React from 'react';
+import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import AppLayout from "@/components/layout/AppLayout";
+import { Member } from "@/types";
 import { useChama } from "@/context/ChamaContext";
+import { useNavigate } from 'react-router-dom';
+import { UserPlus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
@@ -34,14 +27,11 @@ const formSchema = z.object({
   role: z.enum(["Chairperson", "Treasurer", "Secretary", "Member"]),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
 const AddMember = () => {
   const navigate = useNavigate();
   const { addMember } = useChama();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -51,29 +41,26 @@ const AddMember = () => {
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      setIsSubmitting(true);
       await addMember(data);
       toast({
-        title: "Success",
-        description: "Member added successfully",
+        title: "Member Added",
+        description: "The new member has been successfully added to the Chama.",
       });
       navigate("/members");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add member",
+        description: "Failed to add member. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <AppLayout title="Add New Member">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-md mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -124,19 +111,17 @@ const AddMember = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Member">Member</SelectItem>
-                      <SelectItem value="Chairperson">Chairperson</SelectItem>
-                      <SelectItem value="Treasurer">Treasurer</SelectItem>
-                      <SelectItem value="Secretary">Secretary</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <select 
+                      {...field} 
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="Member">Member</option>
+                      <option value="Chairperson">Chairperson</option>
+                      <option value="Treasurer">Treasurer</option>
+                      <option value="Secretary">Secretary</option>
+                    </select>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -153,10 +138,9 @@ const AddMember = () => {
               <Button 
                 type="submit"
                 className="bg-chama-purple hover:bg-chama-dark-purple"
-                disabled={isSubmitting}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Adding..." : "Add Member"}
+                Add Member
               </Button>
             </div>
           </form>
