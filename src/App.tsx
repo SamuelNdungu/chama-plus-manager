@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,6 +59,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ChamaProvider>
             <Members />
+          </ChamaProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/members/add" element={
+        <ProtectedRoute>
+          <ChamaProvider>
+            <AddMember />
           </ChamaProvider>
         </ProtectedRoute>
       } />
