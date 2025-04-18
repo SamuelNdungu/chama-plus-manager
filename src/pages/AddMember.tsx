@@ -15,10 +15,12 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Member } from "@/types";
 import { useChama } from "@/context/ChamaContext";
 import { useNavigate } from 'react-router-dom';
-import { UserPlus, Phone, Mail, IdCard, User } from "lucide-react";
+import { UserPlus, Phone, Mail, IdCard, User, Heart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
@@ -32,6 +34,7 @@ const formSchema = z.object({
     phone: z.string().min(10, "Phone number must be at least 10 digits"),
     email: z.string().email("Invalid email address"),
     idNumber: z.string().min(6, "ID number must be at least 6 characters"),
+    relationship: z.string().min(2, "Relationship must be at least 2 characters"),
   }),
 });
 
@@ -52,6 +55,7 @@ const AddMember = () => {
         phone: "",
         email: "",
         idNumber: "",
+        relationship: "",
       },
     },
   });
@@ -238,6 +242,23 @@ const AddMember = () => {
                       <div className="relative">
                         <Input placeholder="12345678" {...field} />
                         <IdCard className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="nextOfKin.relationship"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Relationship</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input placeholder="Spouse, Parent, Child, etc" {...field} />
+                        <Heart className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
                       </div>
                     </FormControl>
                     <FormMessage />

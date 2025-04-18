@@ -1,4 +1,3 @@
-
 export type Role = 'Chairperson' | 'Treasurer' | 'Secretary' | 'Member';
 
 export interface User {
@@ -16,8 +15,11 @@ export interface Member extends User {
     name: string;
     phone: string;
     relationship: string;
+    email?: string;
+    idNumber?: string;
   };
   joinedAt: string;
+  idNumber?: string;
 }
 
 export interface Contribution {
