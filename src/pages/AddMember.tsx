@@ -60,10 +60,20 @@ const AddMember = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      await addMember({
+      // Ensure the nextOfKin properties are treated as required
+      const memberData: Partial<Member> = {
         ...data,
         joinedAt: new Date().toISOString().split('T')[0],
-      });
+        nextOfKin: {
+          name: data.nextOfKin.name,
+          phone: data.nextOfKin.phone,
+          email: data.nextOfKin.email,
+          idNumber: data.nextOfKin.idNumber,
+          relationship: data.nextOfKin.relationship,
+        }
+      };
+      
+      await addMember(memberData);
       toast({
         title: "Member Added",
         description: "The new member has been successfully added to the Chama.",
