@@ -15,8 +15,6 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Member } from "@/types";
 import { useChama } from "@/context/ChamaContext";
 import { useNavigate } from 'react-router-dom';
@@ -62,7 +60,10 @@ const AddMember = () => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      await addMember(data);
+      await addMember({
+        ...data,
+        joinedAt: new Date().toISOString().split('T')[0],
+      });
       toast({
         title: "Member Added",
         description: "The new member has been successfully added to the Chama.",
