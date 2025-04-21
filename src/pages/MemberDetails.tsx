@@ -4,7 +4,7 @@ import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { users, user } from "lucide-react";
+import { Users } from "lucide-react";
 
 const MemberDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +16,7 @@ const MemberDetails = () => {
   if (!member) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500">
-        <users className="mb-4" size={48} />
+        <Users className="mb-4" size={48} />
         <div className="text-lg">Member not found</div>
         <Button className="mt-6" onClick={() => navigate("/members")}>
           Back to Members
@@ -99,3 +99,4 @@ const MemberDetails = () => {
 };
 
 export default MemberDetails;
+
