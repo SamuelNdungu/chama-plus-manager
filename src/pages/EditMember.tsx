@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -60,7 +59,6 @@ const EditMember = () => {
     },
   });
 
-  // Prefill form with member details
   useEffect(() => {
     if (member) {
       form.reset({
@@ -83,10 +81,14 @@ const EditMember = () => {
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       await editMember(member!.id, {
-        ...member,
+        ...member!,
         ...data,
         nextOfKin: {
-          ...data.nextOfKin
+          name: data.nextOfKin.name,
+          phone: data.nextOfKin.phone,
+          relationship: data.nextOfKin.relationship,
+          email: data.nextOfKin.email,
+          idNumber: data.nextOfKin.idNumber
         }
       });
       toast({
@@ -118,12 +120,11 @@ const EditMember = () => {
   }
 
   return (
-    <AppLayout title={`Edit Member: ${member.name}`}>
+    <AppLayout title={`Edit Member: ${member?.name}`}>
       <div className="max-w-6xl mx-auto">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Member Details Section */}
               <div className="space-y-4 md:col-span-1">
                 <h3 className="text-lg font-medium">Member Details</h3>
                 
@@ -220,7 +221,6 @@ const EditMember = () => {
                 </div>
               </div>
 
-              {/* Next of Kin Details Section */}
               <div className="space-y-4 md:col-span-1">
                 <h3 className="text-lg font-medium">Next of Kin Details</h3>
                 
