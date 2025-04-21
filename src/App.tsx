@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,13 +11,14 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Members from "./pages/Members";
-import AddMember from "./pages/AddMember";  // Add this import
+import AddMember from "./pages/AddMember";
 import Contributions from "./pages/Contributions";
 import Meetings from "./pages/Meetings";
 import Assets from "./pages/Assets";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import MemberDetails from "./pages/MemberDetails";
 import { useAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -68,6 +68,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ChamaProvider>
             <AddMember />
+          </ChamaProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/members/:id" element={
+        <ProtectedRoute>
+          <ChamaProvider>
+            <MemberDetails />
           </ChamaProvider>
         </ProtectedRoute>
       } />
