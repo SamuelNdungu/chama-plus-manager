@@ -19,6 +19,7 @@ import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import MemberDetails from "./pages/MemberDetails";
+import EditMember from "./pages/EditMember";
 import { useAuth } from "./context/AuthContext";
 
 const queryClient = new QueryClient();
@@ -75,6 +76,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ChamaProvider>
             <MemberDetails />
+          </ChamaProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/members/:id/edit" element={
+        <ProtectedRoute>
+          <ChamaProvider>
+            <EditMember />
           </ChamaProvider>
         </ProtectedRoute>
       } />

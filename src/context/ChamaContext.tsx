@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Chama, Member, Contribution, Meeting, Asset, Document, Role } from '@/types';
 import { useAuth } from './AuthContext';
@@ -18,6 +17,7 @@ interface ChamaContextType {
   scheduleMeeting: (meetingData: Partial<Meeting>) => Promise<void>;
   addAsset: (assetData: Partial<Asset>) => Promise<void>;
   uploadDocument: (documentData: Partial<Document>) => Promise<void>;
+  editMember: (memberId: string, updatedData: Partial<Member>) => Promise<void>;
 }
 
 const ChamaContext = createContext<ChamaContextType | undefined>(undefined);
@@ -508,6 +508,34 @@ export const ChamaProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const editMember = async (memberId: string, updatedData: Partial<Member>) => {
+    try {
+      setIsLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      setMembers((prevMembers) =>
+        prevMembers.map((m) =>
+          m.id === memberId
+            ? { ...m, ...updatedData, nextOfKin: { ...m.nextOfKin, ...updatedData.nextOfKin } }
+            : m
+        )
+      );
+      toast({
+        title: 'Success',
+        description: 'Member updated successfully',
+      });
+    } catch (error) {
+      console.error('Failed to update member:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update member',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <ChamaContext.Provider value={{
       chama,
@@ -523,6 +551,7 @@ export const ChamaProvider = ({ children }: { children: ReactNode }) => {
       scheduleMeeting,
       addAsset,
       uploadDocument,
+      editMember,
     }}>
       {children}
     </ChamaContext.Provider>

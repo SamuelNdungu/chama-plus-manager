@@ -1,10 +1,10 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 const MemberDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +39,9 @@ const MemberDetails = () => {
               <CardTitle>{member.name}</CardTitle>
               <div className="text-gray-500 text-sm">{member.role}</div>
             </div>
+            <Button size="sm" variant="outline" className="ml-auto" onClick={() => navigate(`/members/${member.id}/edit`)}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -99,4 +102,3 @@ const MemberDetails = () => {
 };
 
 export default MemberDetails;
-
