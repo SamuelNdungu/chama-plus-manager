@@ -1,6 +1,6 @@
 
 import AppLayout from "@/components/layout/AppLayout";
-import AddContributionForm from "./add-contribution/AddContributionForm";
+import AddContributionForm from "@/pages/add-contribution/AddContributionForm";
 
 const AddContribution = () => (
   <AppLayout title="Record New Contribution">
