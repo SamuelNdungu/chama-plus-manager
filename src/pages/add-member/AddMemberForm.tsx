@@ -3,7 +3,6 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Form } from "@/components/ui/form";
 import { UserPlus } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
@@ -40,7 +39,13 @@ const AddMemberForm = () => {
       const memberData = {
         ...data,
         joinedAt: new Date().toISOString().split('T')[0],
-        nextOfKin: { ...data.nextOfKin },
+        nextOfKin: { 
+          name: data.nextOfKin.name,
+          phone: data.nextOfKin.phone,
+          relationship: data.nextOfKin.relationship,
+          email: data.nextOfKin.email,
+          idNumber: data.nextOfKin.idNumber
+        },
       };
       await addMember(memberData);
       toast({
