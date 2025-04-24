@@ -93,6 +93,13 @@ const AppRoutes = () => {
           </ChamaProvider>
         </ProtectedRoute>
       } />
+      <Route path="/contributions/add" element={
+        <ProtectedRoute>
+          <ChamaProvider>
+            <AddContribution />
+          </ChamaProvider>
+        </ProtectedRoute>
+      } />
       <Route path="/meetings" element={
         <ProtectedRoute>
           <ChamaProvider>
