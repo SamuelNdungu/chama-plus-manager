@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, TrendingDown, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 const Assets = () => {
   const { assets, isLoading } = useChama();
+  const navigate = useNavigate();
   
   if (isLoading) {
     return (
@@ -32,6 +34,7 @@ const Assets = () => {
           <Button 
             size="sm" 
             className="bg-chama-purple hover:bg-chama-dark-purple"
+            onClick={() => navigate('/assets/add')}
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Asset
@@ -83,11 +86,27 @@ const Assets = () => {
                         <p className="text-sm text-gray-500">Purchase Date</p>
                         <p>{asset.purchaseDate}</p>
                       </div>
+
+                      {asset.location && (
+                        <div className="mt-4">
+                          <p className="text-sm text-gray-500">Location</p>
+                          <p>{asset.location}</p>
+                        </div>
+                      )}
                       
                       {asset.documents && asset.documents.length > 0 && (
                         <div className="mt-4 flex items-center text-chama-purple">
                           <FileText size={16} className="mr-2" />
                           <span>{asset.documents.length} document{asset.documents.length !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+
+                      {asset.documentUrl && (
+                        <div className="mt-4 flex items-center text-chama-purple">
+                          <FileText size={16} className="mr-2" />
+                          <a href={asset.documentUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            View Document
+                          </a>
                         </div>
                       )}
                     </div>
@@ -100,6 +119,7 @@ const Assets = () => {
               <p className="text-gray-500">No assets or investments recorded yet</p>
               <Button 
                 className="mt-4 bg-chama-purple hover:bg-chama-dark-purple"
+                onClick={() => navigate('/assets/add')}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Your First Asset

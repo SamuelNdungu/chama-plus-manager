@@ -60,12 +60,15 @@ export interface Asset {
   id: string;
   chamaId: string;
   name: string;
-  type: 'Land' | 'Shares' | 'SACCO' | 'Business' | 'Other';
+  type: 'Land' | 'Shares' | 'SACCO' | 'Business' | 'Vehicle' | 'Building' | 'Equipment' | 'Other';
   purchaseDate: string;
   purchaseValue: number;
   currentValue: number;
   description: string;
   documents?: string[];
+  location?: string;
+  status?: string;
+  documentUrl?: string;
 }
 
 export interface Document {

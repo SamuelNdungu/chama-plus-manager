@@ -16,6 +16,7 @@ import Contributions from "./pages/Contributions";
 import AddContribution from "./pages/AddContribution";
 import Meetings from "./pages/Meetings";
 import Assets from "./pages/Assets";
+import AddAsset from "./pages/AddAsset";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -112,6 +113,13 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ChamaProvider>
             <Assets />
+          </ChamaProvider>
+        </ProtectedRoute>
+      } />
+      <Route path="/assets/add" element={
+        <ProtectedRoute>
+          <ChamaProvider>
+            <AddAsset />
           </ChamaProvider>
         </ProtectedRoute>
       } />
