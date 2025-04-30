@@ -34,10 +34,16 @@ import {
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { Asset } from '@/types';
+
+// Define valid asset types based on the Asset type
+const assetTypes: Asset['type'][] = ['Land', 'Shares', 'SACCO', 'Business', 'Vehicle', 'Building', 'Equipment', 'Other'];
 
 const assetSchema = z.object({
   name: z.string().min(1, { message: 'Asset name is required' }),
-  type: z.string().min(1, { message: 'Asset type is required' }),
+  type: z.enum(['Land', 'Shares', 'SACCO', 'Business', 'Vehicle', 'Building', 'Equipment', 'Other'], {
+    required_error: 'Asset type is required',
+  }),
   purchaseDate: z.date({ required_error: 'Purchase date is required' }),
   purchaseValue: z.coerce.number().positive({ message: 'Purchase value must be positive' }),
   currentValue: z.coerce.number().positive({ message: 'Current value must be positive' }).optional(),
@@ -57,7 +63,7 @@ const AddAssetForm = () => {
     resolver: zodResolver(assetSchema),
     defaultValues: {
       name: '',
-      type: '',
+      type: undefined,
       purchaseDate: new Date(),
       purchaseValue: 0,
       currentValue: undefined,
@@ -98,7 +104,6 @@ const AddAssetForm = () => {
     }
   };
 
-  const assetTypes = ['Land', 'Shares', 'SACCO', 'Business', 'Vehicle', 'Building', 'Equipment', 'Other'];
   const statusOptions = ['active', 'sold', 'damaged', 'under maintenance'];
 
   return (
@@ -133,7 +138,10 @@ const AddAssetForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Asset Type*</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select asset type" />
