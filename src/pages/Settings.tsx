@@ -14,10 +14,14 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useChama } from "@/context/ChamaContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { UserPlus } from "lucide-react";
 
 const Settings = () => {
-  const { chama } = useChama();
+  const { chama, createChama, updateChama, isLoading } = useChama();
+  const navigate = useNavigate();
   const [chamaSettings, setChamaSettings] = useState({
     name: chama?.name || '',
     description: chama?.description || '',
@@ -33,6 +37,45 @@ const Settings = () => {
     newMemberNotifications: true,
     documentUploads: false,
   });
+
+  useEffect(() => {
+    setChamaSettings({
+      name: chama?.name || '',
+      description: chama?.description || '',
+      contributionAmount: chama?.monthlyContributionAmount || 0,
+      contributionFrequency: chama?.contributionFrequency || 'Monthly',
+      fundingGoal: chama?.fundingGoal || 0,
+    });
+  }, [chama]);
+
+  const handleSaveChamaSettings = async () => {
+    try {
+      if (chama) {
+        await updateChama({
+          name: chamaSettings.name,
+          description: chamaSettings.description,
+          monthlyContributionAmount: chamaSettings.contributionAmount,
+          contributionFrequency: chamaSettings.contributionFrequency,
+          fundingGoal: chamaSettings.fundingGoal,
+        });
+      } else {
+        await createChama({
+          name: chamaSettings.name,
+          description: chamaSettings.description,
+          monthlyContributionAmount: chamaSettings.contributionAmount,
+          contributionFrequency: chamaSettings.contributionFrequency,
+          fundingGoal: chamaSettings.fundingGoal,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to save chama settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Unable to save chama settings',
+        variant: 'destructive',
+      });
+    }
+  };
   
   return (
     <AppLayout title="Settings">
@@ -92,7 +135,11 @@ const Settings = () => {
                 />
               </div>
               
-              <Button className="bg-chama-purple hover:bg-chama-dark-purple">
+              <Button
+                className="bg-chama-purple hover:bg-chama-dark-purple"
+                onClick={handleSaveChamaSettings}
+                disabled={isLoading}
+              >
                 Save Changes
               </Button>
             </CardContent>
@@ -199,6 +246,36 @@ const Settings = () => {
         </TabsContent>
         
         <TabsContent value="account" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>
+                Register new users for your organization
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-chama-light-purple rounded-full">
+                    <UserPlus className="h-5 w-5 text-chama-purple" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Register New User</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Create new user accounts for chama members
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  className="bg-chama-purple hover:bg-chama-dark-purple"
+                  onClick={() => navigate('/signup')}
+                >
+                  Register User
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
           <Card>
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>

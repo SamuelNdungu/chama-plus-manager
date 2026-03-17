@@ -1,0 +1,23 @@
+=== Login Diagnosis ===
+
+Testing email: s2ndungu@gmail.com
+
+Password: "password123" => Status: 401
+  Message: Email or password is incorrect
+
+Password: "Password123" => Status: 401
+  Message: Email or password is incorrect
+
+Password: "Password123!" => Status: 401
+  Message: Email or password is incorrect
+
+Password: "Passw0rd!" => Status: 401
+  Message: Email or password is incorrect
+
+Password: "12345678" => Status: 401
+  Message: Email or password is incorrect
+
+
+=== Checking if user exists ===
+✅ User s2ndungu@gmail.com EXISTS in database
+   Error: An account with this email or username already exists

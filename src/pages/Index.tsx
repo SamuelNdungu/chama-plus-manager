@@ -13,17 +13,10 @@ const Index = () => {
         <h1 className="text-2xl font-bold text-chama-dark-purple">ChamaPlus</h1>
         <div className="space-x-2">
           <Button 
-            variant="outline" 
-            className="border-chama-purple text-chama-purple hover:bg-chama-light-purple"
+            className="bg-chama-purple hover:bg-chama-dark-purple"
             onClick={() => navigate('/login')}
           >
             Sign In
-          </Button>
-          <Button 
-            className="bg-chama-purple hover:bg-chama-dark-purple"
-            onClick={() => navigate('/signup')}
-          >
-            Get Started
           </Button>
         </div>
       </header>
@@ -39,9 +32,9 @@ const Index = () => {
           </p>
           <Button 
             className="bg-chama-purple hover:bg-chama-dark-purple text-lg py-6 px-8"
-            onClick={() => navigate('/signup')}
+            onClick={() => navigate('/login')}
           >
-            Start Your Chama Journey
+            Sign In to Get Started
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -129,21 +122,12 @@ const Index = () => {
           <p className="text-xl mb-8 max-w-2xl mx-auto">
             Join thousands of Chamas across Kenya who are using ChamaPlus to streamline their operations and grow their investments.
           </p>
-          <div className="space-x-4">
-            <Button 
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-chama-dark-purple"
-              onClick={() => navigate('/login')}
-            >
-              Sign In
-            </Button>
-            <Button 
-              className="bg-white text-chama-dark-purple hover:bg-gray-200"
-              onClick={() => navigate('/signup')}
-            >
-              Create Account
-            </Button>
-          </div>
+          <Button 
+            className="bg-white text-chama-dark-purple hover:bg-gray-200 text-lg py-6 px-8"
+            onClick={() => navigate('/login')}
+          >
+            Sign In
+          </Button>
         </div>
       </section>
 

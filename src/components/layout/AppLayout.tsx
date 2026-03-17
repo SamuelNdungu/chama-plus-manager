@@ -12,7 +12,12 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  AlertCircle,
+  TrendingUp,
+  Wallet,
+  PieChart,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -40,9 +45,14 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutGrid size={20} /> },
     { name: 'Members', path: '/members', icon: <Users size={20} /> },
     { name: 'Contributions', path: '/contributions', icon: <DollarSign size={20} /> },
+    { name: 'Arrears', path: '/arrears', icon: <AlertCircle size={20} /> },
+    { name: 'Investments', path: '/investments', icon: <TrendingUp size={20} /> },
+    { name: 'Loans', path: '/loans', icon: <Wallet size={20} /> },
     { name: 'Meetings', path: '/meetings', icon: <Calendar size={20} /> },
     { name: 'Assets', path: '/assets', icon: <Landmark size={20} /> },
+    { name: 'Net Worth', path: '/net-worth', icon: <PieChart size={20} /> },
     { name: 'Documents', path: '/documents', icon: <FileText size={20} /> },
+    { name: 'Reports', path: '/reports', icon: <BarChart3 size={20} /> },
     { name: 'Settings', path: '/settings', icon: <Settings size={20} /> },
   ];
   
@@ -107,7 +117,7 @@ const AppLayout = ({ children, title }: AppLayoutProps) => {
                   <Avatar>
                     <AvatarImage src="" alt={user?.name} />
                     <AvatarFallback className="bg-chama-purple text-white">
-                      {user?.name.substring(0, 2).toUpperCase()}
+                      {(user?.name?.substring(0, 2) || "US").toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">

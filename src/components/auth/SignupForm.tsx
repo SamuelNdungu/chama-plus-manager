@@ -17,6 +17,25 @@ const SignupForm = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
+  const validatePassword = (password: string): { isValid: boolean; error?: string } => {
+    if (password.length < 8) {
+      return { isValid: false, error: 'Password must be at least 8 characters long' };
+    }
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, error: 'Password must contain at least 1 uppercase letter' };
+    }
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, error: 'Password must contain at least 1 lowercase letter' };
+    }
+    if (!/[0-9]/.test(password)) {
+      return { isValid: false, error: 'Password must contain at least 1 number' };
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return { isValid: false, error: 'Password must contain at least 1 special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)' };
+    }
+    return { isValid: true };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -24,6 +43,15 @@ const SignupForm = () => {
       return toast({
         title: 'Error',
         description: 'Please fill in all fields',
+        variant: 'destructive',
+      });
+    }
+    
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return toast({
+        title: 'Invalid Password',
+        description: passwordValidation.error,
         variant: 'destructive',
       });
     }
@@ -40,9 +68,9 @@ const SignupForm = () => {
       await signup(name, email, phone, password);
       toast({
         title: 'Success',
-        description: 'Account created successfully',
+        description: 'User account created successfully',
       });
-      navigate('/dashboard');
+      navigate('/settings');
     } catch (error) {
       toast({
         title: 'Error',
@@ -100,6 +128,9 @@ const SignupForm = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Must be at least 8 characters with uppercase, lowercase, number, and special character
+        </p>
       </div>
       
       <div className="space-y-2">
@@ -119,18 +150,17 @@ const SignupForm = () => {
         className="w-full bg-chama-purple hover:bg-chama-dark-purple" 
         disabled={isLoading}
       >
-        {isLoading ? 'Creating account...' : 'Sign Up'}
+        {isLoading ? 'Creating account...' : 'Register User'}
       </Button>
       
-      <div className="text-center text-sm">
-        Already have an account?{' '}
-        <a
-          onClick={() => navigate('/login')} 
-          className="text-chama-purple hover:underline cursor-pointer"
-        >
-          Sign in
-        </a>
-      </div>
+      <Button 
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => navigate('/settings')}
+      >
+        Cancel
+      </Button>
     </form>
   );
 };

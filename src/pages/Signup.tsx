@@ -5,8 +5,8 @@ import SignupForm from "@/components/auth/SignupForm";
 const Signup = () => {
   return (
     <AuthLayout 
-      title="Create Your Account" 
-      subtitle="Join ChamaPlus to manage your investment groups"
+      title="Register New User" 
+      subtitle="Create a new user account for your chama organization"
     >
       <SignupForm />
     </AuthLayout>

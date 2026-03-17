@@ -79,16 +79,6 @@ const LoginForm = () => {
       >
         {isLoading ? 'Logging in...' : 'Sign In'}
       </Button>
-      
-      <div className="text-center text-sm">
-        Don't have an account?{' '}
-        <a
-          onClick={() => navigate('/signup')} 
-          className="text-chama-purple hover:underline cursor-pointer"
-        >
-          Sign up
-        </a>
-      </div>
     </form>
   );
 };

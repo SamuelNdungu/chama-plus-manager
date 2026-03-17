@@ -1,0 +1,29 @@
+# Systemd service file for Chama Plus Backend
+# Installation: sudo cp chamaplus-backend.service /etc/systemd/system/
+# Enable: sudo systemctl enable chamaplus-backend
+# Start: sudo systemctl start chamaplus-backend
+
+[Unit]
+Description=Chama Plus Backend API Server
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=samuel
+WorkingDirectory=/home/samuel/apps/AkibaPlus/backend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node server.mjs
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/chamaplus-backend.log
+StandardError=append:/var/log/chamaplus-backend-error.log
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

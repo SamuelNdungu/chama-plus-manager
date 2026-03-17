@@ -12,6 +12,7 @@ import MemberDetailsFormSection from "./MemberDetailsFormSection";
 import NextOfKinFormSection from "./NextOfKinFormSection";
 import { Member, } from "@/types";
 import { formSchema, MemberFormType } from "./types";
+import { Form } from "@/components/ui/form";
 
 interface EditMemberFormProps {
   member: Member;
@@ -67,28 +68,30 @@ const EditMemberForm: React.FC<EditMemberFormProps> = ({ member }) => {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <MemberDetailsFormSection control={form.control} />
-        <NextOfKinFormSection control={form.control} />
-      </div>
-      <div className="flex justify-end space-x-4">
-        <Button 
-          type="button" 
-          variant="outline"
-          onClick={() => navigate(`/members/${member.id}`)}
-        >
-          Cancel
-        </Button>
-        <Button 
-          type="submit"
-          className="bg-chama-purple hover:bg-chama-dark-purple"
-        >
-          <Pencil className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
-      </div>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <MemberDetailsFormSection control={form.control} />
+          <NextOfKinFormSection control={form.control} />
+        </div>
+        <div className="flex justify-end space-x-4">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={() => navigate(`/members/${member.id}`)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit"
+            className="bg-chama-purple hover:bg-chama-dark-purple"
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Save Changes
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

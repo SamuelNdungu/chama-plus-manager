@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
@@ -76,9 +76,17 @@ const MembersList = () => {
                     <p className="text-sm text-gray-500">{member.phone}</p>
                   </div>
                 </div>
-                <Badge className={`${getRoleBadgeColor(member.role)}`}>
-                  {member.role}
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge className={`${getRoleBadgeColor(member.role)}`}>
+                    {member.role}
+                  </Badge>
+                  {member.hasUserAccount && (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <UserCheck className="h-3 w-3 mr-1" />
+                      Login
+                    </Badge>
+                  )}
+                </div>
               </div>
             ))
           ) : (

@@ -2,9 +2,13 @@
 import AppLayout from "@/components/layout/AppLayout";
 import MembersList from "@/components/members/MembersList";
 import { useChama } from "@/context/ChamaContext";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Members = () => {
   const { isLoading } = useChama();
+  const navigate = useNavigate();
   
   if (isLoading) {
     return (
@@ -18,6 +22,16 @@ const Members = () => {
   
   return (
     <AppLayout title="Members">
+      <div className="mb-4 flex justify-end">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/arrears')}
+          className="gap-2"
+        >
+          <AlertCircle className="h-4 w-4" />
+          View Arrears
+        </Button>
+      </div>
       <MembersList />
     </AppLayout>
   );

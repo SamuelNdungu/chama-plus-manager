@@ -1,0 +1,5 @@
+           job_name           |         last_run          | last_status |                        last_message                        | run_count 
+------------------------------+---------------------------+-------------+------------------------------------------------------------+-----------
+ generate_monthly_obligations | 2026-02-08 03:20:42.36186 | success     | Generated 0 obligations for 0 chamas. Marked 0 as overdue. |         1
+(1 row)
+
