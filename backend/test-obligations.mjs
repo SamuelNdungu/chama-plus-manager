@@ -12,6 +12,8 @@ import 'dotenv/config';
 import fetch from 'node-fetch';
 
 const API_BASE_URL = process.env.API_URL || 'http://127.0.0.1:3001';
+const DEFAULT_TEST_EMAIL = process.env.OBLIGATIONS_TEST_EMAIL || 'test@example.com';
+const DEFAULT_TEST_PASSWORD = process.env.OBLIGATIONS_TEST_PASSWORD || 'password123';
 let authToken = '';
 let testChamaId = null;
 let testMemberId = null;
@@ -38,14 +40,32 @@ async function apiRequest(endpoint, options = {}) {
 // Test 1: Login (required for authenticated requests)
 async function testLogin() {
   console.log('\n📝 Test 1: User Login');
-  
-  const { response, data } = await apiRequest('/api/auth/login', {
+
+  const tryLogin = async (email, password) => apiRequest('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({
-      email: 'test@example.com',
-      password: 'password123',
+      email,
+      password,
     }),
   });
+
+  let { response, data } = await tryLogin(DEFAULT_TEST_EMAIL, DEFAULT_TEST_PASSWORD);
+
+  if (response.status !== 200 || !data.accessToken) {
+    const uniqueId = Date.now();
+    const fallbackUser = {
+      email: `obligations${uniqueId}@akibaplus.co.ke`,
+      username: `obligations${uniqueId}`,
+      password: 'TempPass1!',
+    };
+
+    await apiRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(fallbackUser),
+    });
+
+    ({ response, data } = await tryLogin(fallbackUser.email, fallbackUser.password));
+  }
 
   if (response.status === 200 && data.accessToken) {
     authToken = data.accessToken;

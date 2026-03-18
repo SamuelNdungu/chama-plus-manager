@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/error";
 
 const ApplyLoan = () => {
   const { selectedChama, members } = useChama();
@@ -45,21 +46,15 @@ const ApplyLoan = () => {
 
   const interestRate = selectedChama?.loanInterestRate || 10;
 
-  useEffect(() => {
-    if (formData.principalAmount && formData.repaymentPeriod) {
-      calculateLoan();
-    }
-  }, [formData.principalAmount, formData.repaymentPeriod]);
-
-  const calculateLoan = () => {
+  const calculateLoan = useCallback(() => {
     const principal = parseFloat(formData.principalAmount) || 0;
     const months = parseInt(formData.repaymentPeriod) || 12;
     const rate = interestRate;
-    
+
     const totalInterest = (principal * rate * months) / 100;
     const totalAmount = principal + totalInterest;
     const monthlyRepayment = totalAmount / months;
-    
+
     setCalculation({
       principal,
       interestRate: rate,
@@ -67,7 +62,13 @@ const ApplyLoan = () => {
       totalAmount,
       monthlyRepayment,
     });
-  };
+  }, [formData.principalAmount, formData.repaymentPeriod, interestRate]);
+
+  useEffect(() => {
+    if (formData.principalAmount && formData.repaymentPeriod) {
+      calculateLoan();
+    }
+  }, [formData.principalAmount, formData.repaymentPeriod, calculateLoan]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,11 +152,11 @@ const ApplyLoan = () => {
       });
       
       navigate("/loans");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting loan application:", error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || error.response?.data?.error || "Failed to submit loan application",
+        description: getErrorMessage(error, "Failed to submit loan application"),
         variant: "destructive",
       });
     } finally {

@@ -39,6 +39,26 @@ const formatDate = (date) => {
   });
 };
 
+const isMissingRelationError = (error) => error?.code === '42P01';
+const isMissingColumnError = (error) => error?.code === '42703';
+
+const queryWithDefaultRows = async (
+  client,
+  queryText,
+  queryParams,
+  defaultRows,
+  allowedErrorCodes = ['42P01']
+) => {
+  try {
+    return await client.query(queryText, queryParams);
+  } catch (error) {
+    if (allowedErrorCodes.includes(error?.code)) {
+      return { rows: defaultRows };
+    }
+    throw error;
+  }
+};
+
 /**
  * GET /api/reports/financial-statement
  * Generate financial statement report (PDF or Excel)
@@ -77,27 +97,29 @@ router.get(
       const [contributionsResult, loansResult, expensesResult, assetsResult] = await Promise.all([
         // Total contributions
         client.query(
-          `SELECT SUM(amount) as total FROM contributions 
+          `SELECT COALESCE(SUM(amount), 0) as total FROM contributions 
            WHERE chama_id = $1 AND contribution_date BETWEEN $2 AND $3 AND status = 'completed'`,
           [chama_id, start_date, end_date]
         ),
         // Total loans disbursed
         client.query(
-          `SELECT SUM(principal_amount) as total FROM loans 
+          `SELECT COALESCE(SUM(principal_amount), 0) as total FROM loans 
            WHERE chama_id = $1 AND disbursement_date BETWEEN $2 AND $3 AND status IN ('disbursed', 'repaying', 'completed')`,
           [chama_id, start_date, end_date]
         ),
         // Total welfare expenses
         client.query(
-          `SELECT SUM(amount_paid) as total FROM welfare_requests 
-           WHERE chama_id = $1 AND approval_date BETWEEN $2 AND $3 AND status = 'approved'`,
+          `SELECT COALESCE(SUM(COALESCE(amount_approved, amount_requested)), 0) as total FROM welfare_requests 
+           WHERE chama_id = $1 AND approval_date BETWEEN $2 AND $3 AND status IN ('approved', 'disbursed')`,
           [chama_id, start_date, end_date]
         ),
         // Current assets value
-        client.query(
+        queryWithDefaultRows(
+          client,
           `SELECT SUM(current_value) as total FROM assets 
            WHERE chama_id = $1 AND status = 'active'`,
-          [chama_id]
+          [chama_id],
+          [{ total: 0 }]
         )
       ]);
 
@@ -231,9 +253,9 @@ router.get(
       const loansResult = await client.query(
         `SELECT 
           l.loan_number,
-          m.name as borrower,
+          COALESCE(m.name, 'Member #' || l.member_id::text) as borrower,
           l.principal_amount,
-          l.interest_amount,
+          COALESCE(l.total_amount - l.principal_amount, 0) as interest_amount,
           l.total_amount,
           l.amount_paid,
           l.balance,
@@ -245,8 +267,7 @@ router.get(
             ELSE l.status
           END as actual_status
         FROM loans l
-        JOIN chama_members cm ON l.chama_member_id = cm.id
-        JOIN members m ON cm.member_id = m.id
+        LEFT JOIN members m ON l.member_id = m.id
         WHERE l.chama_id = $1
         ORDER BY l.disbursement_date DESC`,
         [chama_id]
@@ -256,9 +277,9 @@ router.get(
 
       // Calculate summary statistics
       const totalLoans = loans.length;
-      const totalDisbursed = loans.reduce((sum, loan) => sum + parseFloat(loan.total_amount), 0);
-      const totalRepaid = loans.reduce((sum, loan) => sum + parseFloat(loan.amount_paid), 0);
-      const totalOutstanding = loans.reduce((sum, loan) => sum + parseFloat(loan.balance), 0);
+      const totalDisbursed = loans.reduce((sum, loan) => sum + parseFloat(loan.total_amount || 0), 0);
+      const totalRepaid = loans.reduce((sum, loan) => sum + parseFloat(loan.amount_paid || 0), 0);
+      const totalOutstanding = loans.reduce((sum, loan) => sum + parseFloat(loan.balance || 0), 0);
       const activeLoans = loans.filter(l => ['disbursed', 'repaying'].includes(l.status)).length;
       const overdueLoans = loans.filter(l => l.actual_status === 'overdue').length;
 
@@ -329,11 +350,11 @@ router.get(
         const loansData = loans.map(loan => ({
           loan_number: loan.loan_number,
           borrower: loan.borrower,
-          principal: parseFloat(loan.principal_amount),
-          interest: parseFloat(loan.interest_amount),
-          total: parseFloat(loan.total_amount),
-          paid: parseFloat(loan.amount_paid),
-          balance: parseFloat(loan.balance),
+          principal: parseFloat(loan.principal_amount || 0),
+          interest: parseFloat(loan.interest_amount || 0),
+          total: parseFloat(loan.total_amount || 0),
+          paid: parseFloat(loan.amount_paid || 0),
+          balance: parseFloat(loan.balance || 0),
           disbursement_date: new Date(loan.disbursement_date),
           due_date: new Date(loan.due_date),
           status: loan.actual_status
@@ -426,8 +447,7 @@ router.get(
           c.payment_method,
           c.status
         FROM contributions c
-        JOIN chama_members cm ON c.chama_member_id = cm.id
-        JOIN members m ON cm.member_id = m.id
+        LEFT JOIN members m ON c.member_id = m.id
         WHERE c.chama_id = $1
       `;
       const params = [chama_id];
@@ -446,7 +466,7 @@ router.get(
       }
 
       if (member_id) {
-        query += ` AND cm.member_id = $${paramIndex}`;
+        query += ` AND c.member_id = $${paramIndex}`;
         params.push(member_id);
         paramIndex++;
       }
@@ -616,7 +636,8 @@ router.get(
       const chamaName = chamaResult.rows[0].name;
 
       // Get assets
-      const assetsResult = await client.query(
+      const assetsResult = await queryWithDefaultRows(
+        client,
         `SELECT 
           name,
           asset_type,
@@ -629,7 +650,8 @@ router.get(
         FROM assets
         WHERE chama_id = $1
         ORDER BY purchase_date DESC`,
-        [chama_id]
+        [chama_id],
+        []
       );
 
       const assets = assetsResult.rows;
@@ -791,7 +813,7 @@ router.get(
       const bankBalance = parseFloat(chamaResult.rows[0].total_funds || 0);
 
       // Get net worth data
-      const [contributionsResult, loansResult, assetsResult, investmentsResult] = await Promise.all([
+      const [contributionsResult, loansResult, assetsResult] = await Promise.all([
         // Total contributions up to date
         client.query(
           `SELECT COALESCE(SUM(amount), 0) as total FROM contributions 
@@ -805,18 +827,35 @@ router.get(
           [chama_id]
         ),
         // Assets value
-        client.query(
+        queryWithDefaultRows(
+          client,
           `SELECT COALESCE(SUM(current_value), 0) as total FROM assets 
            WHERE chama_id = $1 AND status = 'active'`,
-          [chama_id]
-        ),
-        // Investments value
-        client.query(
+          [chama_id],
+          [{ total: 0 }]
+        )
+      ]);
+
+      let investmentsResult;
+      try {
+        investmentsResult = await client.query(
           `SELECT COALESCE(SUM(current_balance), 0) as total FROM financial_accounts 
            WHERE chama_id = $1 AND account_type = 'investment'`,
           [chama_id]
-        )
-      ]);
+        );
+      } catch (error) {
+        if (isMissingRelationError(error)) {
+          investmentsResult = { rows: [{ total: 0 }] };
+        } else if (isMissingColumnError(error)) {
+          investmentsResult = await client.query(
+            `SELECT COALESCE(SUM(current_balance), 0) as total FROM financial_accounts 
+             WHERE chama_id = $1 AND type = 'investment'`,
+            [chama_id]
+          );
+        } else {
+          throw error;
+        }
+      }
 
       const totalContributions = parseFloat(contributionsResult.rows[0].total);
       const loansOutstanding = parseFloat(loansResult.rows[0].total);

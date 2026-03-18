@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
@@ -41,14 +41,8 @@ const ArrearsBoard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [sortBy, setSortBy] = useState<"amount" | "overdue">("amount");
 
-  useEffect(() => {
-    if (selectedChama) {
-      fetchArrears();
-    }
-  }, [selectedChama, selectedMonth]);
-
-  const fetchArrears = async () => {
-    if (!selectedChama) return;
+  const fetchArrears = useCallback(async () => {
+    if (!selectedChama?.id) return;
 
     setIsLoading(true);
     setError(null);
@@ -72,7 +66,11 @@ const ArrearsBoard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedChama?.id, selectedMonth]);
+
+  useEffect(() => {
+    fetchArrears();
+  }, [fetchArrears]);
 
   const filteredMembers = members.filter((member) =>
     member.member_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,7 +81,7 @@ const ArrearsBoard = () => {
     if (sortBy === "amount") {
       return parseFloat(b.total_outstanding) - parseFloat(a.total_outstanding);
     } else {
-      return parseInt(b.overdue_count as unknown as string) - parseInt(a.overdue_count as unknown as string);
+      return Number(b.overdue_count) - Number(a.overdue_count);
     }
   });
 
@@ -298,9 +296,9 @@ const ArrearsBoard = () => {
                             KES {outstandingAmount.toLocaleString()}
                           </TableCell>
                           <TableCell className="text-center">
-                            {parseInt(member.overdue_count as unknown as string) > 0 ? (
+                            {Number(member.overdue_count) > 0 ? (
                               <Badge variant="destructive">Overdue</Badge>
-                            ) : parseInt(member.partial_count as unknown as string) > 0 ? (
+                            ) : Number(member.partial_count) > 0 ? (
                               <Badge variant="secondary">Partial</Badge>
                             ) : (
                               <Badge variant="outline">Pending</Badge>

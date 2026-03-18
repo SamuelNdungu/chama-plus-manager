@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,18 +11,16 @@ const NetWorthDashboard = () => {
   const [netWorth, setNetWorth] = useState<NetWorthSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (chama) {
-      fetchNetWorth();
+  const fetchNetWorth = useCallback(async () => {
+    if (!chama?.id) {
+      return;
     }
-  }, [chama]);
 
-  const fetchNetWorth = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/assets/networth?chama_id=${chama?.id}`,
+        `${import.meta.env.VITE_API_URL}/api/assets/networth?chama_id=${chama.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -46,7 +44,11 @@ const NetWorthDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [chama?.id]);
+
+  useEffect(() => {
+    fetchNetWorth();
+  }, [fetchNetWorth]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-KE', {

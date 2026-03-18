@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,18 +33,17 @@ const Assets = () => {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
 
-  useEffect(() => {
-    if (chama) {
-      fetchAssets();
-      fetchSummary();
-    }
-  }, [chama, selectedType, selectedStatus]);
+  const getAuthToken = () => localStorage.getItem('accessToken') || localStorage.getItem('token');
 
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
+    if (!chama?.id) {
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
-      let url = `${import.meta.env.VITE_API_URL}/api/assets?chama_id=${chama?.id}`;
+      const token = getAuthToken();
+      let url = `${import.meta.env.VITE_API_URL}/api/assets?chama_id=${chama.id}`;
       
       if (selectedType !== 'all') {
         url += `&asset_type=${selectedType}`;
@@ -70,13 +69,17 @@ const Assets = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [chama?.id, selectedStatus, selectedType]);
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
+    if (!chama?.id) {
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/assets/summary/stats?chama_id=${chama?.id}`,
+        `${import.meta.env.VITE_API_URL}/api/assets/summary/stats?chama_id=${chama.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -94,7 +97,12 @@ const Assets = () => {
     } catch (error) {
       console.error('Error fetching summary:', error);
     }
-  };
+  }, [chama?.id]);
+
+  useEffect(() => {
+    fetchAssets();
+    fetchSummary();
+  }, [fetchAssets, fetchSummary]);
 
   const calculateAppreciation = (purchaseValue: number, currentValue: number) => {
     const change = currentValue - purchaseValue;

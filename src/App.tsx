@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ChamaProvider } from "./context/ChamaContext";
-import { lazy, Suspense } from "react";import { PageLoader } from "@/components/ui/loader";
+import { lazy, Suspense } from "react";
+import { PageLoader } from "@/components/ui/loader";
 // Immediate load (essential for initial render)
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -192,12 +193,6 @@ const AppRoutes = () => {
         <ProtectedRoute>
           <ChamaProvider>
             <NetWorthDashboard />
-          </ChamaProvider>
-        </ProtectedRoute>
-      } />      <Route path="/assets/:id" element={
-        <ProtectedRoute>
-          <ChamaProvider>
-            <AssetDetails />
           </ChamaProvider>
         </ProtectedRoute>
       } />

@@ -96,8 +96,11 @@ class ReportGenerator {
   /**
    * Add table to PDF
    */
-  addTable(doc, data, config) {
-    const { headers, rows, startY = 160, columnWidths } = config;
+  addTable(doc, dataOrConfig, config) {
+    // Backward-compatible signature support:
+    // addTable(doc, config) and addTable(doc, data, config)
+    const tableConfig = config || dataOrConfig;
+    const { headers, rows, startY = 160, columnWidths } = tableConfig;
     let y = startY;
 
     // Calculate column widths if not provided

@@ -3,12 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useChama } from "@/context/ChamaContext";
 import { formatDistanceToNow } from "date-fns";
 import { CreditCard, UserPlus, FilePlus, Calendar } from "lucide-react";
+import type { Contribution, Document, Meeting, Member } from "@/types";
+
+type Activity =
+  | { id: string; type: "contribution"; date: Date; data: Contribution }
+  | { id: string; type: "member"; date: Date; data: Member }
+  | { id: string; type: "document"; date: Date; data: Document }
+  | { id: string; type: "meeting"; date: Date; data: Meeting };
 
 const RecentActivities = () => {
   const { contributions, members, documents, meetings } = useChama();
 
   // Create a combined array of recent activities
-  const activities = [
+  const activities: Activity[] = [
     ...contributions.map(contribution => ({
       id: contribution.id,
       type: 'contribution',
@@ -56,7 +63,7 @@ const RecentActivities = () => {
     }
   };
 
-  const renderActivityContent = (activity: any) => {
+  const renderActivityContent = (activity: Activity) => {
     switch (activity.type) {
       case 'contribution':
         return (

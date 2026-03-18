@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
@@ -44,17 +44,14 @@ const Loans = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  useEffect(() => {
-    if (selectedChama?.id) {
-      fetchLoans();
-      fetchSummary();
+  const fetchLoans = useCallback(async () => {
+    if (!selectedChama?.id) {
+      return;
     }
-  }, [selectedChama, statusFilter]);
 
-  const fetchLoans = async () => {
     try {
       setLoading(true);
-      const params: Record<string, string> = { chama_id: selectedChama!.id };
+      const params: Record<string, string> = { chama_id: selectedChama.id };
       if (statusFilter !== "all") {
         params.status = statusFilter;
       }
@@ -63,8 +60,8 @@ const Loans = () => {
       const response = await apiClient.get<{ loans: Loan[] }>(
         `/loans?${queryString}`
       );
-      
-setLoans(response.loans || []);
+
+      setLoans(response.loans || []);
     } catch (error) {
       console.error("Error fetching loans:", error);
       toast({
@@ -75,18 +72,27 @@ setLoans(response.loans || []);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedChama?.id, statusFilter, toast]);
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
+    if (!selectedChama?.id) {
+      return;
+    }
+
     try {
       const response = await apiClient.get<{ summary: LoanSummary }>(
-        `/loans/summary/stats?chama_id=${selectedChama!.id}`
+        `/loans/summary/stats?chama_id=${selectedChama.id}`
       );
       setSummary(response.summary);
     } catch (error) {
       console.error("Error fetching loan summary:", error);
     }
-  };
+  }, [selectedChama?.id]);
+
+  useEffect(() => {
+    fetchLoans();
+    fetchSummary();
+  }, [fetchLoans, fetchSummary]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {

@@ -224,7 +224,7 @@ export const ChamaProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadData();
-  }, [isAuthenticated, mapApiMemberToMember]);
+  }, [isAuthenticated, mapApiChamaToChama, mapApiMemberToMember]);
 
   // Removed localStorage persistence to avoid mock data usage
 

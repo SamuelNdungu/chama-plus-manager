@@ -17,6 +17,9 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
 });
 
+const isMissingRelationError = (error) => error?.code === '42P01';
+const isMissingColumnError = (error) => error?.code === '42703';
+
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -43,10 +46,9 @@ router.get('/',
   handleValidationErrors,
   async (req, res) => {
     const client = await pool.connect();
+    const { chama_id, asset_type, status, limit = 50, offset = 0 } = req.query;
     
     try {
-      const { chama_id, asset_type, status, limit = 50, offset = 0 } = req.query;
-      
       let queryText = `
         SELECT 
           a.*,
@@ -86,6 +88,8 @@ router.get('/',
       queryParams.push(limit, offset);
       
       const result = await client.query(queryText, queryParams);
+      const parsedLimit = parseInt(limit, 10);
+      const parsedOffset = parseInt(offset, 10);
       
       // Get total count
       let countQuery = 'SELECT COUNT(*) FROM assets a WHERE 1=1';
@@ -108,18 +112,29 @@ router.get('/',
       }
       
       const countResult = await client.query(countQuery, countParams);
-      const total = parseInt(countResult.rows[0].count);
+      const total = parseInt(countResult.rows[0].count, 10);
       
       res.json({
         assets: result.rows,
         pagination: {
           total,
-          limit: parseInt(limit),
-          offset: parseInt(offset),
-          hasMore: offset + result.rows.length < total
+          limit: parsedLimit,
+          offset: parsedOffset,
+          hasMore: parsedOffset + result.rows.length < total
         }
       });
     } catch (error) {
+      if (isMissingRelationError(error)) {
+        return res.json({
+          assets: [],
+          pagination: {
+            total: 0,
+            limit: parseInt(limit, 10),
+            offset: parseInt(offset, 10),
+            hasMore: false
+          }
+        });
+      }
       console.error('Error fetching assets:', error);
       res.status(500).json({ error: 'Failed to fetch assets', message: error.message });
     } finally {
@@ -230,9 +245,11 @@ router.post('/',
  */
 router.get('/:id',
   authenticateToken,
-  [param('id').isInt()],
-  handleValidationErrors,
-  async (req, res) => {
+  async (req, res, next) => {
+    if (!/^\d+$/.test(req.params.id)) {
+      return next();
+    }
+
     const client = await pool.connect();
     
     try {
@@ -577,6 +594,20 @@ router.get('/summary/stats',
         breakdown: typeBreakdown.rows
       });
     } catch (error) {
+      if (isMissingRelationError(error)) {
+        return res.json({
+          summary: {
+            total_assets: '0',
+            active_assets: '0',
+            sold_assets: '0',
+            total_purchase_value: '0',
+            total_current_value: '0',
+            total_appreciation: '0',
+            asset_type_count: '0'
+          },
+          breakdown: []
+        });
+      }
       console.error('Error fetching assets summary:', error);
       res.status(500).json({ error: 'Failed to fetch summary', message: error.message });
     } finally {
@@ -629,20 +660,44 @@ router.get('/networth',
       );
       
       // Get total assets value
-      const assetsResult = await client.query(
-        `SELECT COALESCE(SUM(current_value), 0) as total_assets_value
-         FROM assets
-         WHERE chama_id = $1 AND status = 'active'`,
-        [chama_id]
-      );
+      let assetsResult;
+      try {
+        assetsResult = await client.query(
+          `SELECT COALESCE(SUM(current_value), 0) as total_assets_value
+           FROM assets
+           WHERE chama_id = $1 AND status = 'active'`,
+          [chama_id]
+        );
+      } catch (error) {
+        if (!isMissingRelationError(error)) {
+          throw error;
+        }
+        assetsResult = { rows: [{ total_assets_value: 0 }] };
+      }
       
       // Get investment portfolio value
-      const investmentsResult = await client.query(
-        `SELECT COALESCE(SUM(current_balance), 0) as total_investments_value
-         FROM financial_accounts
-         WHERE chama_id = $1 AND type = 'investment' AND is_active = true`,
-        [chama_id]
-      );
+      let investmentsResult;
+      try {
+        investmentsResult = await client.query(
+          `SELECT COALESCE(SUM(current_balance), 0) as total_investments_value
+           FROM financial_accounts
+           WHERE chama_id = $1 AND account_type = 'investment' AND is_active = true`,
+          [chama_id]
+        );
+      } catch (error) {
+        if (isMissingRelationError(error)) {
+          investmentsResult = { rows: [{ total_investments_value: 0 }] };
+        } else if (isMissingColumnError(error)) {
+          investmentsResult = await client.query(
+            `SELECT COALESCE(SUM(current_balance), 0) as total_investments_value
+             FROM financial_accounts
+             WHERE chama_id = $1 AND type = 'investment' AND is_active = true`,
+            [chama_id]
+          );
+        } else {
+          throw error;
+        }
+      }
       
       const totalContributions = parseFloat(contributionsResult.rows[0].total_contributions);
       const totalLoansOutstanding = parseFloat(loansResult.rows[0].total_loans_outstanding);

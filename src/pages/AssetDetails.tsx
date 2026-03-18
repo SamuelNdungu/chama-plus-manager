@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,8 @@ const AssetDetails = () => {
   const [showValuationDialog, setShowValuationDialog] = useState(false);
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
 
+  const getAuthToken = () => localStorage.getItem('accessToken') || localStorage.getItem('token');
+
   // Valuation form state
   const [valuationForm, setValuationForm] = useState({
     valuationDate: new Date().toISOString().split('T')[0],
@@ -67,16 +69,14 @@ const AssetDetails = () => {
     notes: '',
   });
 
-  useEffect(() => {
-    if (id) {
-      fetchAssetDetails();
+  const fetchAssetDetails = useCallback(async () => {
+    if (!id) {
+      return;
     }
-  }, [id]);
 
-  const fetchAssetDetails = async () => {
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/assets/${id}`,
         {
@@ -104,11 +104,15 @@ const AssetDetails = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchAssetDetails();
+  }, [fetchAssetDetails]);
 
   const handleAddValuation = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/assets/${id}/valuations`,
         {
@@ -159,7 +163,7 @@ const AssetDetails = () => {
 
   const handleAddMaintenance = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/assets/${id}/maintenance`,
         {

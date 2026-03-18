@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
@@ -16,6 +16,9 @@ import { TrendingUp, TrendingDown, Plus, DollarSign, Percent, Building2, ArrowUp
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import type { FinancialAccount, InvestmentPortfolio } from "@/types";
+import { getErrorMessage } from "@/lib/error";
+
+type MovementType = "deposit" | "withdrawal" | "interest" | "fee";
 
 const Investments = () => {
   const { chama: selectedChama, isLoading: chamaLoading } = useChama();
@@ -38,50 +41,48 @@ const Investments = () => {
   });
   
   const [newMovement, setNewMovement] = useState({
-    movementType: "deposit" as "deposit" | "withdrawal" | "interest" | "fee",
+    movementType: "deposit" as MovementType,
     amount: "",
     description: "",
     movementDate: format(new Date(), "yyyy-MM-dd"),
     referenceNumber: ""
   });
 
-  useEffect(() => {
-    if (selectedChama) {
-      fetchPortfolio();
-      fetchAccounts();
-    }
-  }, [selectedChama]);
-
-  const fetchPortfolio = async () => {
-    if (!selectedChama) return;
+  const fetchPortfolio = useCallback(async () => {
+    if (!selectedChama?.id) return;
     
     try {
       setIsLoading(true);
-      const response = await apiClient.get<{ investments: any[], totals: any }>(
+      const response = await apiClient.get<InvestmentPortfolio>(
         `/accounts/investments/portfolio?chama_id=${selectedChama.id}`
       );
       setPortfolio(response);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Portfolio fetch error:', err);
-      setError(err.message || 'Failed to load investment portfolio');
+      setError(getErrorMessage(err, 'Failed to load investment portfolio'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedChama?.id]);
 
-  const fetchAccounts = async () => {
-    if (!selectedChama) return;
+  const fetchAccounts = useCallback(async () => {
+    if (!selectedChama?.id) return;
     
     try {
       const response = await apiClient.get<{ accounts: FinancialAccount[] }>(
         `/accounts?chama_id=${selectedChama.id}`
       );
       setAccounts(response.accounts.filter(acc => acc.type === 'investment'));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Accounts fetch error:', err);
     }
-  };
+  }, [selectedChama?.id]);
+
+  useEffect(() => {
+    fetchPortfolio();
+    fetchAccounts();
+  }, [fetchAccounts, fetchPortfolio]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,10 +109,10 @@ const Investments = () => {
       
       fetchPortfolio();
       fetchAccounts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Error",
-        description: err.message || "Failed to create account",
+        description: getErrorMessage(err, "Failed to create account"),
         variant: "destructive",
       });
     }
@@ -145,10 +146,10 @@ const Investments = () => {
       
       fetchPortfolio();
       fetchAccounts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Error",
-        description: err.message || "Failed to record movement",
+        description: getErrorMessage(err, "Failed to record movement"),
         variant: "destructive",
       });
     }
@@ -369,7 +370,7 @@ onClick={() => {
                                 <Label htmlFor="movementType">Transaction Type</Label>
                                 <Select
                                   value={newMovement.movementType}
-                                  onValueChange={(value: any) => setNewMovement({ ...newMovement, movementType: value })}
+                                  onValueChange={(value: MovementType) => setNewMovement({ ...newMovement, movementType: value })}
                                 >
                                   <SelectTrigger>
                                     <SelectValue />

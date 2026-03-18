@@ -9,6 +9,13 @@ import { handleValidationErrors } from '../middleware/validate.mjs';
 
 const router = express.Router();
 
+const ensureNumericIdParam = (req, _res, next) => {
+  if (!/^\d+$/.test(req.params.id)) {
+    return next('route');
+  }
+  next();
+};
+
 // GET /api/contributions - list all contributions
 router.get('/', async (req, res) => {
   const client = await req.app.locals.pool.connect();
@@ -35,7 +42,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/contributions/:id - get contribution by id
-router.get('/:id', [param('id').isInt()], async (req, res) => {
+router.get('/:id', ensureNumericIdParam, [param('id').isInt()], async (req, res) => {
   if (handleValidationErrors(req, res)) return;
   const client = await req.app.locals.pool.connect();
 
@@ -132,6 +139,7 @@ router.post(
 // PUT /api/contributions/:id - update contribution
 router.put(
   '/:id',
+  ensureNumericIdParam,
   [
     param('id').isInt(),
     body('chamaId').isInt(),
@@ -210,7 +218,7 @@ router.put(
 );
 
 // DELETE /api/contributions/:id - delete contribution
-router.delete('/:id', [param('id').isInt()], async (req, res) => {
+router.delete('/:id', ensureNumericIdParam, [param('id').isInt()], async (req, res) => {
   if (handleValidationErrors(req, res)) return;
   const client = await req.app.locals.pool.connect();
 
@@ -272,18 +280,17 @@ router.get('/obligations', async (req, res) => {
         co.chama_id,
         c.name as chama_name,
         co.member_id,
-        m.first_name || ' ' || m.last_name as member_name,
+        m.name as member_name,
         co.contribution_month,
         co.expected_amount,
         co.paid_amount,
-        co.outstanding_balance,
+        (co.expected_amount - COALESCE(co.paid_amount, 0)) as outstanding_balance,
         co.status,
         co.created_at,
         co.updated_at
       FROM contribution_obligations co
       JOIN chamas c ON c.id = co.chama_id
-      JOIN chama_members cm ON cm.id = co.member_id
-      JOIN members m ON m.id = cm.member_id
+      JOIN members m ON m.id = co.member_id
       WHERE 1=1
     `;
 
@@ -328,6 +335,7 @@ router.get('/obligations', async (req, res) => {
 
     res.json({
       data: result.rows,
+      obligations: result.rows,
       pagination: {
         total,
         limit: parseInt(limit),
@@ -363,24 +371,24 @@ router.get('/arrears', async (req, res) => {
     const query = `
       SELECT 
         m.id as member_id,
-        m.first_name || ' ' || m.last_name as member_name,
-        m.phone_number,
+        m.name as member_name,
+        m.phone as phone_number,
         cm.id as chama_member_id,
         COUNT(co.id) as total_obligations,
         COUNT(CASE WHEN co.status = 'overdue' THEN 1 END) as overdue_count,
         COUNT(CASE WHEN co.status = 'partial' THEN 1 END) as partial_count,
         COALESCE(SUM(co.expected_amount), 0) as total_expected,
         COALESCE(SUM(co.paid_amount), 0) as total_paid,
-        COALESCE(SUM(co.outstanding_balance), 0) as total_outstanding
+        COALESCE(SUM(co.expected_amount - COALESCE(co.paid_amount, 0)), 0) as total_outstanding
       FROM members m
       JOIN chama_members cm ON cm.member_id = m.id
-      LEFT JOIN contribution_obligations co ON co.member_id = cm.id AND co.chama_id = $1
+      LEFT JOIN contribution_obligations co ON co.member_id = cm.member_id AND co.chama_id = cm.chama_id
       WHERE cm.chama_id = $1
         AND cm.is_active = true
         AND cm.exit_date IS NULL
         ${month ? "AND DATE_TRUNC('month', co.contribution_month) = DATE_TRUNC('month', $2::date)" : ''}
-      GROUP BY m.id, m.first_name, m.last_name, m.phone_number, cm.id
-      HAVING COALESCE(SUM(co.outstanding_balance), 0) > 0
+      GROUP BY m.id, m.name, m.phone, cm.id
+      HAVING COALESCE(SUM(co.expected_amount - COALESCE(co.paid_amount, 0)), 0) > 0
       ORDER BY total_outstanding DESC
     `;
 
@@ -448,10 +456,15 @@ router.get('/obligations/stats', async (req, res) => {
         COUNT(CASE WHEN status = 'waived' THEN 1 END) as waived_count,
         COALESCE(SUM(expected_amount), 0) as total_expected,
         COALESCE(SUM(paid_amount), 0) as total_paid,
-        COALESCE(SUM(outstanding_balance), 0) as total_outstanding,
+        COALESCE(SUM(expected_amount - COALESCE(paid_amount, 0)), 0) as total_outstanding,
         ROUND(
           COALESCE(
-            AVG(CASE WHEN outstanding_balance = 0 THEN 100 ELSE (paid_amount / NULLIF(expected_amount, 0) * 100) END),
+            AVG(
+              CASE
+                WHEN (expected_amount - COALESCE(paid_amount, 0)) <= 0 THEN 100
+                ELSE (COALESCE(paid_amount, 0) / NULLIF(expected_amount, 0) * 100)
+              END
+            ),
             0
           ),
           2
@@ -527,7 +540,10 @@ router.post(
         });
       }
 
-      const currentOutstanding = parseFloat(obligation.outstanding_balance);
+      const currentOutstanding = Math.max(
+        0,
+        parseFloat(obligation.expected_amount) - parseFloat(obligation.paid_amount || 0)
+      );
       if (paymentAmount > currentOutstanding) {
         await client.query('ROLLBACK');
         return res.status(400).json({
@@ -537,19 +553,21 @@ router.post(
       }
 
       // Calculate new values
-      const newPaidAmount = parseFloat(obligation.paid_amount) + paymentAmount;
-      const newOutstandingBalance = parseFloat(obligation.expected_amount) - newPaidAmount;
+      const newPaidAmount = Math.min(
+        parseFloat(obligation.expected_amount),
+        parseFloat(obligation.paid_amount || 0) + paymentAmount
+      );
+      const newOutstandingBalance = Math.max(0, parseFloat(obligation.expected_amount) - newPaidAmount);
       const newStatus = newOutstandingBalance <= 0 ? 'paid' : 'partial';
 
       // Update obligation
       await client.query(
         `UPDATE contribution_obligations 
          SET paid_amount = $1,
-             outstanding_balance = $2,
-             status = $3,
+             status = $2,
              updated_at = NOW()
-         WHERE id = $4`,
-        [newPaidAmount, newOutstandingBalance, newStatus, id]
+         WHERE id = $3`,
+        [newPaidAmount, newStatus, id]
       );
 
       // Record contribution
@@ -584,8 +602,8 @@ router.post(
         `UPDATE chama_members 
          SET total_contributions = total_contributions + $1,
              updated_at = NOW()
-         WHERE id = $2`,
-        [paymentAmount, obligation.member_id]
+         WHERE chama_id = $2 AND member_id = $3`,
+        [paymentAmount, obligation.chama_id, obligation.member_id]
       );
 
       // Update chama total_funds

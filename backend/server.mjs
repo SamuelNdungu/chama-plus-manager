@@ -10,7 +10,6 @@ import authRoutes from './routes/auth.mjs';
 import chamasRoutes from './routes/chamas.mjs';
 import contributionsRoutes from './routes/contributions.mjs';
 import meetingsRoutes from './routes/meetings.mjs';
-import obligationsRoutes from './routes/obligations.mjs';
 import accountsRoutes from './routes/accounts.mjs';
 import loansRoutes from './routes/loans.mjs';
 import assetsRoutes from './routes/assets.mjs';
@@ -66,8 +65,12 @@ app.use(helmet({
 // Rate limiters
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
-  message: 'Too many authentication attempts, please try again after 15 minutes',
+  max: 20,
+  skipSuccessfulRequests: true,
+  message: {
+    error: 'TooManyRequests',
+    message: 'Too many failed authentication attempts, please try again after 15 minutes',
+  },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -106,12 +109,14 @@ pool.connect()
     process.exit(1);
   });
 
-// Mount authentication routes with rate limiting
-app.use('/api/auth', authLimiter, authRoutes);
+// Only rate-limit credential endpoints; keep token verify/refresh available.
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth', authRoutes);
 // Mount chamas routes with rate limiting
 app.use('/api/chamas', apiLimiter, chamasRoutes);
 // Mount contributions routes with rate limiting
-app.use('/api/contributions', apiLimiter, contributionsRoutes, obligationsRoutes);
+app.use('/api/contributions', apiLimiter, contributionsRoutes);
 // Mount meetings routes with rate limiting
 app.use('/api/meetings', apiLimiter, meetingsRoutes);
 // Mount accounts routes with rate limiting
@@ -200,8 +205,8 @@ app.post(
           role,
           id_number,
           nextOfKinName,
-          nextOfKinPhone,
           nextOfKinEmail,
+          nextOfKinPhone,
           nextOfKinRelationship,
           nextOfKinIdNumber,
         ]

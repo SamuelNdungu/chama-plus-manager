@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
 import { Users, DollarSign, TrendingUp, Calendar, AlertCircle, TrendingDown, Wallet } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { InvestmentPortfolio } from "@/types";
 
@@ -19,36 +19,42 @@ const DashboardStats = () => {
   const [arrearsSummary, setArrearsSummary] = useState<ArrearsSummary | null>(null);
   const [investmentPortfolio, setInvestmentPortfolio] = useState<InvestmentPortfolio | null>(null);
   const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (selectedChama?.id) {
-      fetchArrears();
-      fetchInvestmentPortfolio();
+
+  const fetchArrears = useCallback(async () => {
+    if (!selectedChama?.id) {
+      return;
     }
-  }, [selectedChama]);
-  
-  const fetchArrears = async () => {
+
     try {
       const response = await apiClient.get<{
         data: unknown[];
         summary: ArrearsSummary;
-      }>(`/contributions/arrears?chama_id=${selectedChama?.id}`);
+      }>(`/contributions/arrears?chama_id=${selectedChama.id}`);
       setArrearsSummary(response.summary);
     } catch (error) {
       console.error("Error fetching arrears summary:", error);
     }
-  };
+  }, [selectedChama?.id]);
 
-  const fetchInvestmentPortfolio = async () => {
+  const fetchInvestmentPortfolio = useCallback(async () => {
+    if (!selectedChama?.id) {
+      return;
+    }
+
     try {
       const response = await apiClient.get<InvestmentPortfolio>(
-        `/accounts/investments/portfolio?chama_id=${selectedChama?.id}`
+        `/accounts/investments/portfolio?chama_id=${selectedChama.id}`
       );
       setInvestmentPortfolio(response);
     } catch (error) {
       console.error("Error fetching investment portfolio:", error);
     }
-  };
+  }, [selectedChama?.id]);
+
+  useEffect(() => {
+    fetchArrears();
+    fetchInvestmentPortfolio();
+  }, [fetchArrears, fetchInvestmentPortfolio]);
   
   // Calculate total paid contributions
   const totalPaid = contributions

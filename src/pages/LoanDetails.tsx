@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useChama } from "@/context/ChamaContext";
 import { apiClient } from "@/services/api";
@@ -46,6 +46,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/error";
 
 const LoanDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -85,13 +86,11 @@ const LoanDetails = () => {
     notes: "",
   });
 
-  useEffect(() => {
-    if (id) {
-      fetchLoanDetails();
+  const fetchLoanDetails = useCallback(async () => {
+    if (!id) {
+      return;
     }
-  }, [id]);
 
-  const fetchLoanDetails = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get<{ loan: Loan; payments: LoanPayment[] }>(
@@ -110,7 +109,11 @@ const LoanDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, navigate, toast]);
+
+  useEffect(() => {
+    fetchLoanDetails();
+  }, [fetchLoanDetails]);
 
   const handleApproveLoan = async () => {
     if (!approveData.approvedBy) {
@@ -135,11 +138,11 @@ const LoanDetails = () => {
       
       setApproveDialogOpen(false);
       fetchLoanDetails();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error approving loan:", error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to approve loan",
+        description: getErrorMessage(error, "Failed to approve loan"),
         variant: "destructive",
       });
     }
@@ -170,11 +173,11 @@ const LoanDetails = () => {
       
       setDisburseDialogOpen(false);
       fetchLoanDetails();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error disbursing loan:", error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to disburse loan",
+        description: getErrorMessage(error, "Failed to disburse loan"),
         variant: "destructive",
       });
     }
@@ -226,11 +229,11 @@ const LoanDetails = () => {
         notes: "",
       });
       fetchLoanDetails();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error recording payment:", error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || error.response?.data?.error || "Failed to record payment",
+        description: getErrorMessage(error, "Failed to record payment"),
         variant: "destructive",
       });
     }

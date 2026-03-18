@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useChama } from "@/context/ChamaContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { Users, Pencil, UserPlus, UserCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { apiClient } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/error";
 
 interface MemberDetail {
   id: string;
@@ -33,7 +33,6 @@ interface MemberDetail {
 
 const MemberDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const { members } = useChama();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -68,8 +67,6 @@ const MemberDetails = () => {
     fetchMemberDetails();
   }, [id, toast]);
 
-  const member_old = members.find((m) => m.id === id);
-
   const validatePassword = (password: string): { isValid: boolean; error?: string } => {
     if (password.length < 8) {
       return { isValid: false, error: 'Password must be at least 8 characters long' };
@@ -83,7 +80,7 @@ const MemberDetails = () => {
     if (!/[0-9]/.test(password)) {
       return { isValid: false, error: 'Password must contain at least 1 number' };
     }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[^A-Za-z0-9]/.test(password)) {
       return { isValid: false, error: 'Password must contain at least 1 special character' };
     }
     return { isValid: true };
@@ -137,10 +134,10 @@ const MemberDetails = () => {
       setUsername("");
       setPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to convert member to user",
+        description: getErrorMessage(error, "Failed to convert member to user"),
         variant: "destructive",
       });
     } finally {

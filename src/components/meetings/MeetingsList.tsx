@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, Search, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import type { Meeting } from "@/types";
 
 const MeetingsList = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const MeetingsList = () => {
     );
   };
 
-  const renderMeetingCard = (meeting: any) => {
+  const renderMeetingCard = (meeting: Meeting) => {
     const isToday = isMeetingToday(meeting.date);
     
     return (

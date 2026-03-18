@@ -9,6 +9,19 @@ import EditMemberForm from "./edit-member/EditMemberForm";
 import { apiClient } from "@/services/api";
 import { Member } from "@/types";
 
+interface MemberResponse {
+  id: string | number;
+  name: string;
+  email: string;
+  phone: string;
+  role: Member["role"];
+  chamaId?: string | number;
+  chama_id?: string | number;
+  joinedAt?: string;
+  idNumber?: string;
+  nextOfKin?: Member["nextOfKin"];
+}
+
 // Only import types, no logic here
 const EditMember = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +42,7 @@ const EditMember = () => {
     const fetchMember = async () => {
       try {
         setIsFetching(true);
-        const data = await apiClient.get<any>(`/members/${id}`);
+        const data = await apiClient.get<MemberResponse>(`/members/${id}`);
         const fetchedMember: Member = {
           id: String(data.id),
           name: data.name,

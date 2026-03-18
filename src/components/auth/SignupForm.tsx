@@ -30,7 +30,7 @@ const SignupForm = () => {
     if (!/[0-9]/.test(password)) {
       return { isValid: false, error: 'Password must contain at least 1 number' };
     }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[^A-Za-z0-9]/.test(password)) {
       return { isValid: false, error: 'Password must contain at least 1 special character (!@#$%^&*()_+-=[]{};\':"|,.<>/?)' };
     }
     return { isValid: true };

@@ -644,14 +644,14 @@ router.post('/:id/payments',
       );
       
       // Update loan balance and amount_paid
-      const newBalance = currentBalance - paymentAmount;
+      const newBalance = Math.max(0, currentBalance - paymentAmount);
       const newAmountPaid = parseFloat(loan.amount_paid) + paymentAmount;
       
       let newStatus = loan.status;
-      if (newBalance === 0) {
+      if (newBalance <= 0) {
         newStatus = 'completed';
       } else if (loan.status === 'disbursed') {
-        newStatus =' repaying';
+        newStatus = 'repaying';
       }
       
       await client.query(
